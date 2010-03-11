@@ -5,12 +5,15 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>Faye demo: chat client</title>
   <link rel="stylesheet" href="/chat/style.css" type="text/css" media="screen">
+  <link rel="stylesheet" href="/chat/lib/jquery.tooltip.css" type="text/css" media="screen">
   <script src="/geniverse/geniverse/geniverse.nocache.js" type="text/javascript"></script>
   
   <script src="/chat/jquery.js" type="text/javascript"></script>
   <script src="/chat/comet.js" type="text/javascript"></script>
   
   <script src="/chat/geniversechat.js" type="text/javascript"></script>
+
+  <script src="/chat/lib/jquery.tooltip.min.js" type="text/javascript"></script>
   <!--
   <script src="/soapbox.js" type="text/javascript"></script>
   -->
@@ -21,6 +24,7 @@
     $(document).ready(function() {
 	
 	chatDragon = null;
+	allDragons = {};
 	
 	$('#createDragons').click(function(e) {
 		addRandomDragon();
@@ -33,12 +37,30 @@
 			var imageSuccess = function(url){
 				var dragonImage = jQuery(document.createElement('img'))
 				dragonImage.attr('src', url)
-							.attr('width', 66)
-							.attr('height', 66)
+							.attr('width', 63)
+							.attr('height', 63)
+							.attr('style','border: 2px solid white')
+							.attr('class', 'dragonImage')
 							.attr('id', dragon);
+							
+				allDragons[dragonImage.attr('id')] = dragon;
+				
 				dragonImage.click(function (e){
-					alert(dragonImage.attr('id'))
+					$('.dragonImage').attr('style','border: 2px solid white');
+					dragonImage.attr('style','border: 2px solid gray');
+					var img = dragonImage.attr('src');
+					var dragon = allDragons[dragonImage.attr('id')];
+					chatDragon = {image: img, dragon: dragon};
 				})
+				
+				dragonImage.tooltip({ 
+				    delay: 400, 
+				    showURL: false, 
+				    bodyHandler: function() { 
+				        return $("<img/>").attr("src", this.src); 
+				    } 
+				});
+				
 				$('#dragonPool').append(dragonImage);
 						chatDragon = {image: url,
 										dragon: dragon};
@@ -56,17 +78,17 @@
 		generateDragonWithCallback(dragonSuccess, dragonFailure);
 	}
 
-	// $('#addDragon').click(function(e) {
-	// 	     if (chatDragon != null)
-	// 			Chat.addMessageObjectToChat(chatDragon);
-	//       });
+	$('#addDragon').click(function(e) {
+		     if (chatDragon != null)
+				Chat.addMessageObjectToChat(chatDragon);
+	      });
 
       Chat.subscribe('/org', acceptOrg, true);
 
 
     function acceptOrg(message) {
 		if (message.messageObject != null && message.messageObject.dragon != null){ 
-			alert("Dragon received: "+ message.messageObject.dragon.alleles)
+			// alert("Dragon received: "+ message.messageObject.dragon.alleles)
 		}
     }
     });
@@ -88,6 +110,7 @@
   <div id="app">
 	
 	<div id="dragonWindow" style="float:left;" id="dragonWindow">
+		<label>My Dragon Pool</label>
 		<div id="dragonPool" style="width:220; height:220; border:1px solid #9dba4f; overflow: auto;">
 		</div>
 		<p>

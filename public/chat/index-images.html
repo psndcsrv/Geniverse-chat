@@ -50,7 +50,7 @@
 			Chat.addMessageObjectToChat(chatDragon);
       });
 
-      Chat.subscribe('/org', acceptOrg, true);
+      Chat.subscribe('/images-org', acceptOrg, true);
 
 
     function acceptOrg(message) {
@@ -104,7 +104,7 @@
 
   <script type="text/javascript">
     Comet = new Faye.Client('/chat/comet');
-    Chat.init(Comet, "/main");
+    Chat.init(Comet, "/images-main");
   </script>
 </div>  
 </body>
