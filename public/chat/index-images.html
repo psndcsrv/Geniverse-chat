@@ -19,29 +19,17 @@
   <script type="text/javascript">
 
     $(document).ready(function() {
+	$('#dragonImage').hide();
 	
 	chatDragon = null;
-	
-	$('#createDragons').click(function(e) {
-		addRandomDragon();
-		addRandomDragon();
-	});
-
-	function addRandomDragon() {
-
+	$('#createDragon').click(function(e) {
 		var dragonSuccess = function(dragon) {
 			var imageSuccess = function(url){
-				var dragonImage = jQuery(document.createElement('img'))
-				dragonImage.attr('src', url)
-							.attr('width', 66)
-							.attr('height', 66)
-							.attr('id', dragon);
-				dragonImage.click(function (e){
-					alert(dragonImage.attr('id'))
-				})
-				$('#dragonPool').append(dragonImage);
-						chatDragon = {image: url,
-										dragon: dragon};
+				$('#dragonImage').hide();
+				chatDragon = {image: url,
+							dragon: dragon};
+				$('#dragonImage').attr('src', url);
+				$('#dragonImage').fadeIn('fast');
 			}
 			var imageFailure = function(errormsg){
 				var message = {user: "Error", message: errormsg};
@@ -53,13 +41,14 @@
 		      var message = {user: "Error", message: errormsg};
 		      Chat.post(message, "/main");
         };
-		generateDragonWithCallback(dragonSuccess, dragonFailure);
-	}
+		$('#dragonImage').fadeOut('fast');
+        generateDragonWithCallback(dragonSuccess, dragonFailure);
+	});
 
-	// $('#addDragon').click(function(e) {
-	// 	     if (chatDragon != null)
-	// 			Chat.addMessageObjectToChat(chatDragon);
-	//       });
+	$('#addDragon').click(function(e) {
+	     if (chatDragon != null)
+			Chat.addMessageObjectToChat(chatDragon);
+      });
 
       Chat.subscribe('/org', acceptOrg, true);
 
@@ -88,10 +77,11 @@
   <div id="app">
 	
 	<div id="dragonWindow" style="float:left;" id="dragonWindow">
-		<div id="dragonPool" style="width:220; height:220; border:1px solid #9dba4f; overflow: auto;">
+		<div id="dragonInfo" style="width:150; height:150; border:1px solid #9dba4f;">
+			<img id="dragonImage" src="" width="150" height="150">
 		</div>
 		<p>
-		    <button id="createDragons">Create dragons</button>
+	        <button id="createDragon">Create a random dragon</button>
 		</p>
 		<p>
 		    <button id="addDragon">Add dragon to chat</button>
@@ -114,9 +104,8 @@
 
   <script type="text/javascript">
     Comet = new Faye.Client('/chat/comet');
-    Chat.init(Comet, "/test");
+    Chat.init(Comet, "/main");
   </script>
 </div>  
 </body>
 </html>
-
