@@ -3,7 +3,6 @@ var ch_org = '/org';
 
 Chat = {
   
-  chatCommet: null,
   /**
    * Initializes the application, passing in the globally shared Comet
    * client. Apps on the same page should share a Comet client so
@@ -22,6 +21,13 @@ Chat = {
     this._post    = $('#postMessage');
     this._message = $('#message');
     this._stream  = $('#stream');
+    this._clear   = $('#clear');
+
+    this._messageObject = null;
+    this._messageImage = $('#messageImage');
+
+    this._message.attr('cols', 40);
+	this._messageImage.attr('width', 0)
     
     this._app.hide();
     
@@ -60,11 +66,24 @@ Chat = {
 		e.preventDefault();
 		self.postMessage();
 	  });
+	
+	// Clear text and object.
+	 this._clear.click(function(e) {
+		e.preventDefault();
+		self.clearMessage();
+	      return false;
+	    });
   },
 
+  /**
+   * Posts the contents of the current chat, and the attached object, if any
+   */
   postMessage: function(){
   		msg = $('#message').val();
 	    message = {user: this._username, message: msg};
+	    if (this._messageObject != null)
+			message.messageObject = this._messageObject;
+			
 	    for (i in this._postingChannels){
 		    var channel = this._postingChannels[i];
 		    if (channel.slice(0,1) == "/")			// prevent app from crashing and dying...
@@ -72,21 +91,37 @@ Chat = {
 			else
 				alert(channel + " is not a valid channel")
 		}
-  		$('#message').val('');
+  		this.clearMessage();
   },
-  
-  /**
-   * Sends messages that the user has entered. "message" is a json object
-   */
-  // post: function(message) {
-  // 	
-  // 		// Message object to transmit over Comet channels
-  // 	    message = {user: this._username, message: message};
-  // 	
-  //     // Publish to this user's 'from' channel, and to channels for any
-  //     // @replies found in the message
-  //     this._comet.publish('/main', message);
-  //   },
+
+  clearMessage: function(){
+	this._message.val('');
+	this.removeMessageObjectFromChat();
+  },
+
+  addMessageObjectToChat: function(messageObject){
+	this._messageObject = messageObject;
+	if (this._messageObject.image != null){
+	  this._addImage(this._messageObject.image);
+	}
+  },
+
+  removeMessageObjectFromChat: function(messageObject){
+	this._messageObject = null;
+	this._removeImage();
+  },
+
+  _addImage: function(url) {
+	this._message.attr('cols', 30);
+	this._messageImage.attr('src', url)
+	this._messageImage.attr('width', 55)
+  },
+
+  _removeImage: function() {
+	this._message.attr('cols', 40);
+	this._messageImage.attr('src', '')
+	this._messageImage.attr('width', 0)
+  },
 
 /**
    * Sends messages that the user has entered. The message is scanned for
@@ -108,13 +143,16 @@ Chat = {
    * the user's message list.
    */
   accept: function(message) {
-    this._stream.prepend('<li><b>' + message.user + ':</b> ' +
-                                     message.message + '</li>');
+	var messageString = '<b>' + message.user + ':</b> '+message.message;
+	if (message.messageObject != null && message.messageObject.image != null)
+		messageString = '<div><img style="float: left; margin: 5px;" src="'+message.messageObject.image+'" width="55" height="55">' + messageString + '</div>';
+    this._stream.prepend('<li style="overflow: auto;">' + messageString + '</li>');
   },
 
-  subscribe: function(channel, callback) {
-	this._postingChannels.push(channel);
+  subscribe: function(channel, callback, addToChatChannels) {	
 	this._comet.subscribe(channel, callback, this);
+	if (addToChatChannels)
+		this._postingChannels.push(channel);
    },
 
 };

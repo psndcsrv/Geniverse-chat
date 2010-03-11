@@ -17,36 +17,38 @@
   
 
   <script type="text/javascript">
-    function chatDragon(dragon) {
-      alert(dragon.alleles);
-      var alleles = dragon.alleles;
-      var message = {user: "foo", message: JSON.stringify(dragon)};
-      Chat.post(message, "/org");
-    }
-
-    function chatMessage(errormsg) {
-      var message = {user: "foo", message: "baz"};
-      Chat.post(message, "/org");
-    }
-
-    function acceptOrg(message) {
-		$('#stream').prepend('<li><b>' + message.user + ' submitted a dragon:</b> ' + message.org + ", " +
-	                                     message.message + '</li>');
-    }
 
     $(document).ready(function() {
-      $('#postDragon').submit(function(e) {
-        var onSuccess = function(dragon) {
-          chatDragon(dragon);
-        };
-        var onFailure = function(errormsg) {
-          chatMessage(errormsg);
-        };
-        generateDragonWithCallback(onSuccess, onFailure);
+
+	$('#addDragon').submit(function(e) {
+	        var dragonSuccess = function(dragon) {
+				var imageSuccess = function(url){
+					chatDragon = {image: url,
+								dragon: dragon};
+					Chat.addMessageObjectToChat(chatDragon);
+				}
+				var imageFailure = function(errormsg){
+					var message = {user: "Error", message: errormsg};
+					Chat.post(message, "/main");
+				}
+				getDragonImageURL(dragon, 5, imageSuccess, imageFailure);
+	        };
+	        var dragonFailure = function(errormsg) {
+			      var message = {user: "Error", message: errormsg};
+			      Chat.post(message, "/main");
+	        };
+	        generateDragonWithCallback(dragonSuccess, dragonFailure);
         return false;
       });
 
-      Chat.subscribe('/org', acceptOrg);
+      Chat.subscribe('/org', acceptOrg, true);
+
+
+    function acceptOrg(message) {
+		if (message.messageObject != null && message.messageObject.dragon != null){ 
+			alert("Dragon received: "+ message.messageObject.dragon.alleles)
+		}
+    }
     });
   </script>
   
@@ -55,7 +57,7 @@
 <body>
 <div class="container">
   
-  <h1><em>Geniverse</em> | single channel chat</h1>
+  <h1><em>Geniverse</em> | dragon chat</h1>
   
   <form id="enterUsername">
     <label for="username">Pick a username</label>
@@ -67,12 +69,14 @@
     
     <form id="postMessage">
       <label for="message">Post a message</label><br>
-      <textarea name="message" id="message" rows="3" cols="40"></textarea>
-      <input type="submit" value="Chat">
+      <img id="messageImage" src="" height="55" width="55"/>
+      <textarea name="message" id="message" rows="3" cols="30"></textarea>
+      <button idd="submit">Chat</button>
+      <button id="clear">Clear</button>
     </form>
-    
-    <form id="postDragon">
-        <input type="submit" value="Send a dragon" >
+
+    <form id="addDragon">
+        <input type="submit" value="Add a random dragon to chat" >
       </form>
     
     <ul id="stream">
