@@ -5,12 +5,52 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>Faye demo: chat client</title>
   <link rel="stylesheet" href="/chat/style.css" type="text/css" media="screen">
+  <script src="/geniverse/geniverse/geniverse.nocache.js" type="text/javascript"></script>
+  
   <script src="/chat/jquery.js" type="text/javascript"></script>
   <script src="/chat/comet.js" type="text/javascript"></script>
+  
   <script src="/chat/geniversechat.js" type="text/javascript"></script>
   <!--
   <script src="/soapbox.js" type="text/javascript"></script>
   -->
+  
+
+  <script type="text/javascript">
+    function chatDragon(dragon) {
+      alert(dragon.alleles);
+      var alleles = dragon.alleles;
+      var message = {user: "foo", message: JSON.stringify(dragon)};
+      Chat.post(message, "/org");
+    }
+
+    function chatMessage(errormsg) {
+      var message = {user: "foo", message: "baz"};
+      Chat.post(message, "/org");
+    }
+
+    function acceptOrg(message) {
+		$('#stream').prepend('<li><b>' + message.user + ' submitted a dragon:</b> ' + message.org + ", " +
+	                                     message.message + '</li>');
+    }
+
+    $(document).ready(function() {
+      $('#postDragon').submit(function(e) {
+        var onSuccess = function(dragon) {
+          chatDragon(dragon);
+        };
+        var onFailure = function(errormsg) {
+          chatMessage(errormsg);
+        };
+        generateDragonWithCallback(onSuccess, onFailure);
+        return false;
+      });
+
+      Chat.subscribe('/org', acceptOrg);
+    });
+  </script>
+  
+  
 </head>
 <body>
 <div class="container">
@@ -30,20 +70,21 @@
       <textarea name="message" id="message" rows="3" cols="40"></textarea>
       <input type="submit" value="Chat">
     </form>
-
-	<form id="postDragon">
-      <input type="submit" value="Send a dragon">
-    </form>
+    
+    <form id="postDragon">
+        <input type="submit" value="Send a dragon" >
+      </form>
     
     <ul id="stream">
     </ul>
   </div>
   
+  <div id="sendButtonContainer" style="visibility: hidden;">button</div>
+
   <script type="text/javascript">
     Comet = new Faye.Client('/chat/comet');
-    Chat.init(Comet);
+    Chat.init(Comet, "/main");
   </script>
-
 </div>  
 </body>
 </html>

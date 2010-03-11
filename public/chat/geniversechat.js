@@ -2,21 +2,24 @@ var ch_main = '/main';
 var ch_org = '/org';
 
 Chat = {
-	
-   
+  
+  chatCommet: null,
   /**
    * Initializes the application, passing in the globally shared Comet
    * client. Apps on the same page should share a Comet client so
    * that they may share an open HTTP connection with the server.
    */
-  init: function(comet) {
+  init: function(comet, chatchannel) {
     var self = this;
     this._comet = comet;
+
+    this._chatchannel = chatchannel;
+
+    this._postingChannels = [ chatchannel ];
     
     this._login   = $('#enterUsername');
     this._app     = $('#app');
     this._post    = $('#postMessage');
-    this._postDragon    = $('#postDragon');
     this._message = $('#message');
     this._stream  = $('#stream');
     
@@ -37,8 +40,7 @@ Chat = {
    */
   launch: function() {
     var self = this;
-    this._comet.subscribe(ch_main, this.accept, this);
-    this._comet.subscribe(ch_org, this.acceptDragon, this);
+    this._comet.subscribe(this._chatchannel, this.accept, this);
     
     // Hide login form, show main application UI
     this._login.fadeOut('slow', function() {
@@ -58,25 +60,18 @@ Chat = {
 		e.preventDefault();
 		self.postMessage();
 	  });
-	
-	// When we send a dragon...
-    this._postDragon.submit(function() {
-		self.postOrganism();
-      return false;
-    });
   },
 
   postMessage: function(){
   		msg = $('#message').val();
 	    message = {user: this._username, message: msg};
-		this.post(message, ch_main);
-  		$('#message').val('');
-  },
-
-  postOrganism: function(){
-  		msg = $('#message').val();
-	    message = {user: this._username, message: msg, org: "My Dragon"};
-		this.post(message, ch_org);
+	    for (i in this._postingChannels){
+		    var channel = this._postingChannels[i];
+		    if (channel.slice(0,1) == "/")			// prevent app from crashing and dying...
+				this.post(message, this._postingChannels[i]);
+			else
+				alert(channel + " is not a valid channel")
+		}
   		$('#message').val('');
   },
   
@@ -117,14 +112,10 @@ Chat = {
                                      message.message + '</li>');
   },
 
-/**
-   * Handler for messages received over subscribed channels. Takes the
-   * message object sent by the post() method and displays it in
-   * the user's message list.
-   */
-  acceptDragon: function(message) {
-    this._stream.prepend('<li><b>' + message.user + ' submitted a dragon:</b> ' + message.org + ", " +
-                                     message.message + '</li>');
-  }
+  subscribe: function(channel, callback) {
+	this._postingChannels.push(channel);
+	this._comet.subscribe(channel, callback, this);
+   },
+
 };
 
