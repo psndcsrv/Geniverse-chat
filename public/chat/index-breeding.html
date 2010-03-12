@@ -190,7 +190,7 @@
 		image.src = url;
 	}
 
-      Chat.subscribe('/org', acceptOrg, true);
+      Chat.subscribe('/breeding-org', acceptOrg, true);
 
 
     function acceptOrg(message) {
@@ -269,7 +269,7 @@
 
   <script type="text/javascript">
     Comet = new Faye.Client('/chat/comet');
-    Chat.init(Comet, "/test");
+    Chat.init(Comet, "/breeding-main");
   </script>
 </div>  
 </body>
