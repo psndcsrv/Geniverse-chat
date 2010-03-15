@@ -34,51 +34,28 @@ Faye.extend(Faye, {
   },
   
   Grammar: {
-
     LOWALPHA:     /^[a-z]$/,
-
     UPALPHA:     /^[A-Z]$/,
-
     ALPHA:     /^([a-z]|[A-Z])$/,
-
     DIGIT:     /^[0-9]$/,
-
     ALPHANUM:     /^(([a-z]|[A-Z])|[0-9])$/,
-
     MARK:     /^(\-|\_|\!|\~|\(|\)|\$|\@)$/,
-
     STRING:     /^(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)| |\/|\*|\.))*$/,
-
     TOKEN:     /^(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)))+$/,
-
     INTEGER:     /^([0-9])+$/,
-
     CHANNEL_SEGMENT:     /^(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)))+$/,
-
     CHANNEL_SEGMENTS:     /^(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)))+(\/(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)))+)*$/,
-
     CHANNEL_NAME:     /^\/(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)))+(\/(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)))+)*$/,
-
     WILD_CARD:     /^\*{1,2}$/,
-
     CHANNEL_PATTERN:     /^(\/(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)))+)*\/\*{1,2}$/,
-
     VERSION_ELEMENT:     /^(([a-z]|[A-Z])|[0-9])(((([a-z]|[A-Z])|[0-9])|\-|\_))*$/,
-
     VERSION:     /^([0-9])+(\.(([a-z]|[A-Z])|[0-9])(((([a-z]|[A-Z])|[0-9])|\-|\_))*)*$/,
-
     CLIENT_ID:     /^((([a-z]|[A-Z])|[0-9]))+$/,
-
     ID:     /^((([a-z]|[A-Z])|[0-9]))+$/,
-
     ERROR_MESSAGE:     /^(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)| |\/|\*|\.))*$/,
-
     ERROR_ARGS:     /^(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)| |\/|\*|\.))*(,(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)| |\/|\*|\.))*)*$/,
-
     ERROR_CODE:     /^[0-9][0-9][0-9]$/,
-
     ERROR:     /^([0-9][0-9][0-9]:(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)| |\/|\*|\.))*(,(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)| |\/|\*|\.))*)*:(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)| |\/|\*|\.))*|[0-9][0-9][0-9]::(((([a-z]|[A-Z])|[0-9])|(\-|\_|\!|\~|\(|\)|\$|\@)| |\/|\*|\.))*)$/
-
   },
   
   commonElement: function(lista, listb) {
@@ -251,6 +228,7 @@ Faye.extend(Faye.Channel, {
   SUBSCRIBE:    '/meta/subscribe',
   UNSUBSCRIBE:  '/meta/unsubscribe',
   DISCONNECT:   '/meta/disconnect',
+  CLIENTS:      '/meta/clients',
   
   META:         'meta',
   SERVICE:      'service',
@@ -674,6 +652,18 @@ Faye.Client = Faye.Class({
     }, this);
   },
   
+  clients: function(callback) {
+    if (this._state !== this.CONNECTED) {
+	    return;
+	  }
+    this._transport.send({
+      channel:  Faye.Channel.CLIENTS,
+      id:       this._clientId,
+    }, function(response) {
+    callback(response);
+}, this);
+  },
+
   handleAdvice: function(advice) {
     Faye.extend(this._advice, advice);
     if (this._advice.reconnect === this.HANDSHAKE) this._clientId = null;
@@ -767,6 +757,11 @@ Faye.Server = Faye.Class({
     var ids = [];
     Faye.each(this._clients, function(key, value) { ids.push(key) });
     return ids;
+  },
+
+  clients: function() {
+    var ids = this.clientIds();
+    return {clients: ids}
   },
   
   process: function(messages, local, callback) {
@@ -1119,55 +1114,42 @@ Faye.Error = Faye.Class({
   }
 });
 
-
 Faye.Error.versionMismatch = function() {
   return new this(300, arguments, "Version mismatch").toString();
 };
-
 Faye.Error.conntypeMismatch = function() {
   return new this(301, arguments, "Connection types not supported").toString();
 };
-
 Faye.Error.extMismatch = function() {
   return new this(302, arguments, "Extension mismatch").toString();
 };
-
 Faye.Error.badRequest = function() {
   return new this(400, arguments, "Bad request").toString();
 };
-
 Faye.Error.clientUnknown = function() {
   return new this(401, arguments, "Unknown client").toString();
 };
-
 Faye.Error.parameterMissing = function() {
   return new this(402, arguments, "Missing required parameter").toString();
 };
-
 Faye.Error.channelForbidden = function() {
   return new this(403, arguments, "Forbidden channel").toString();
 };
-
 Faye.Error.channelUnknown = function() {
   return new this(404, arguments, "Unknown channel").toString();
 };
-
 Faye.Error.channelInvalid = function() {
   return new this(405, arguments, "Invalid channel").toString();
 };
-
 Faye.Error.extUnknown = function() {
   return new this(406, arguments, "Unknown extension").toString();
 };
-
 Faye.Error.publishFailed = function() {
   return new this(407, arguments, "Failed to publish").toString();
 };
-
 Faye.Error.serverError = function() {
   return new this(500, arguments, "Internal server error").toString();
 };
-
 
 
 Faye.NodeHttpTransport = Faye.Class(Faye.Transport, {
