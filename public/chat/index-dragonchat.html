@@ -1,0 +1,306 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Geniverse demos: Dragon chatting</title>
+  <script src="/geniverse/geniverse/geniverse.nocache.js" type="text/javascript"></script>
+  
+  <script src="/chat/jquery.js" type="text/javascript"></script>
+  <script src="/chat/comet.js" type="text/javascript"></script>	
+  <script src="lib/json2.js" type="text/javascript"></script>
+  
+  <script src="/chat/geniversechat.js" type="text/javascript"></script>
+
+  <script src="/chat/lib/jquery.tooltip.min.js" type="text/javascript"></script>
+  <!--
+  <script src="/soapbox.js" type="text/javascript"></script>
+  -->
+  
+  <link rel="stylesheet" href="/chat/style.css" type="text/css" media="screen">
+  <link rel="stylesheet" href="/chat/lib/jquery.tooltip.css" type="text/css" media="screen">
+
+  <script type="text/javascript">
+
+    $(document).ready(function() {
+	
+	mySelectedDragon = null;	// currently selected dragon, as {image: IMG_URL, dragon: JSON_GOrganism}
+	publicSelectedDragon = null;
+	mother = null;
+	father = null;
+	child = null;
+	allDragons = {};
+	
+	$('#createDragons').click(function(e) {
+		addRandomDragon(0);
+		addRandomDragon(1);
+	});
+
+	function addRandomDragon(sex) {
+
+		var dragonSuccess = function(dragon) {
+			// alert("dragon: "+dragon);
+			// 			alert("alleles: "+dragon.alleles_0);
+			// 			alert("sex: "+dragon.sex_0);
+			// 			alert(JSON.stringify(dragon));
+			var imageSuccess = function(url){
+				addDragonToMyPool(dragon, url);
+			}
+			var imageFailure = function(errormsg){
+				var message = {user: "Error", message: errormsg};
+				Chat.post(message, "/main");
+			}
+			
+			 if (dragon.sex != sex){
+				addRandomDragon(sex);
+			} else {
+				getDragonImageURL(dragon, 5, imageSuccess, imageFailure);
+			 }
+        };
+        var dragonFailure = function(errormsg) {
+		      var message = {user: "Error", message: errormsg};
+		      Chat.post(message, "/main");
+        };
+		generateDragonWithCallback(dragonSuccess, dragonFailure);
+	}
+
+	$('#addDragon').click(function(e) {
+		     if (mySelectedDragon != null)
+				Chat.addMessageObjectToChat(mySelectedDragon);
+	});
+	
+	$('#addDragonToBreeding').click(function(e) {
+		if (mySelectedDragon != null){
+			var parent;
+			if (mySelectedDragon.dragon.sex == 0) {
+				father = mySelectedDragon.dragon;
+				parent = "father";
+			} else {
+				mother = mySelectedDragon.dragon;
+				parent = "mother";
+			}
+			var dragonImage = jQuery(document.createElement('img'))
+			dragonImage.attr('src', mySelectedDragon.image)
+						.attr('width', 100)
+						.attr('height', 100);
+			$('#'+parent).html(dragonImage);
+			$('#'+parent+'label').html(parent)
+			
+		}
+	});
+	
+	$('#addChildToPool').click(function(e) {
+		if (child != null){
+			addDragonToMyPool(child, $('#child img').attr('src'))
+			child = null;
+		}
+	});
+	
+	function addDragonToPool(dragon, imageurl, divid, classname) {
+		$('.'+classname).attr('style','border: 2px solid white');
+
+		var dragonImage = jQuery(document.createElement('img'))
+		dragonImage.attr('src', imageurl)
+					.attr('width', 63)
+					.attr('height', 63)
+					.attr('style','border: 2px solid white')
+					.attr('class', classname)
+					.attr('id', dragon);
+					
+		allDragons[dragonImage.attr('id')] = dragon;
+		
+		dragonImage.click(function (e){
+			$('.'+classname).attr('style','border: 2px solid white');
+			dragonImage.attr('style','border: 2px solid gray');
+		})
+		
+		dragonImage.tooltip({ 
+		    delay: 400, 
+		    showURL: false, 
+		    bodyHandler: function() { 
+		        return $("<img/>").attr("src", this.src); 
+		    } 
+		});
+		
+		$('#'+divid).append(dragonImage);
+		
+		return dragonImage;
+	}
+	
+	function addDragonToMyPool(dragon, imageurl) {
+		var image = addDragonToPool(dragon, imageurl, "dragonPool", "myDragonImage");
+		image.click(function (e){
+			var img = image.attr('src');
+			var dragon = allDragons[image.attr('id')];
+			mySelectedDragon = {image: imageurl, dragon: dragon};
+		});
+		
+		image.click(); // click to select child
+	}
+	
+	function addDragonToPublicPool(dragon, imageurl) {
+		var image = addDragonToPool(dragon, imageurl, "publicPool", "publicDragonImage");
+		image.click(function (e){
+			var img = image.attr('src');
+			var dragon = allDragons[image.attr('id')];
+			publicSelectedDragon = {image: imageurl, dragon: dragon};
+		});
+		
+		image.click(); // click to select child
+	}
+	
+	$('#addDragonToMyPool').click(function(){
+		if (publicSelectedDragon != null){
+			addDragonToMyPool(publicSelectedDragon.dragon, publicSelectedDragon.image);
+		}
+	});
+	
+	$('#breed').click(function(e) {
+		if (mother != null && father != null){
+			var onSuccess = function(organism) {
+				child = organism;
+				var imageSuccess = function(url){
+					var dragonImage = jQuery(document.createElement('img'))
+					dragonImage.hide();
+					dragonImage.attr('id', 'childImage');
+					addImage('childImage', url, 80, 80);
+					// dragonImage.attr('src', url)
+					// 								.attr('width', 100)
+					// 								.attr('height', 100);
+					$('#child').html(dragonImage);
+					
+				}
+				var imageFailure = function(errormsg){
+					var message = {user: "Error", message: errormsg};
+					Chat.post(message, "/main");
+				}
+				getDragonImageURL(child, 5, imageSuccess, imageFailure);
+				
+			};
+			var onFailure = function(errormsg) {
+				var message = {user: "Error", message: errormsg};
+			      Chat.post(message, "/main");
+			};
+			// alert("trying "+JSON.stringify(mother))
+			breedDragon(mother, father, onSuccess, onFailure);
+			
+		}
+	});
+	
+	
+	
+	function addImage(id, url, width, height){
+		var image = new Image();
+		$(image).load(function(){
+			$('#'+id).attr('src', image.src)
+				.attr('width', width)
+				.attr('height', height)
+				.attr('style', '');
+		});
+		image.src = url;
+	}
+
+      Chat.subscribe('/org', acceptOrg, true);
+
+
+    function acceptOrg(message) {
+		if (message.messageObject != null && message.messageObject.dragon != null){ 
+			// need to set image, as createGOrganismFromJSONString currently demands it
+			message.messageObject.dragon.imageURL = message.messageObject.image;
+			var realDragon = createGOrganismFromJSONString(JSON.stringify(message.messageObject.dragon));
+			addDragonToPublicPool(realDragon, message.messageObject.image)
+		}
+    }
+	
+
+    });
+  </script>
+  
+  
+</head>
+<body>
+<div class="container">
+  
+  <h1><em>Geniverse</em> | dragon chat</h1>
+  
+  <form id="enterUsername">
+    <label for="username">Pick a username</label>
+    <input type="text" name="username" id="username">
+    <input type="submit" value="Go">
+  </form>
+  
+  <div id="app">
+			<div id="dragonBreedingWrapper">
+				<label>Dragon Breeding</label>
+				<div id="dragonBreeding" style="width:220; height:220; border:1px solid #9dba4f; overflow: auto;">
+					<!-- <div id="mother" style="width: 110; float: left;"></div><div id="father" style="width: 110; float: right;"></div> -->
+					<table style="text-align: center;">
+						<tr>
+							<td id="motherlabel" width="50%"></td>
+							<td id="fatherlabel" width="50%"></td>
+						</tr>
+						<tr>
+							<td id="mother" width="50%"></td>
+							<td id="father" width="50%"></td>
+						</tr>
+						<tr>
+							<td style="text-align: center;" id="child" colspan="2"></td>
+						</tr>
+					</table>
+				</div>
+				<p>
+					<button id="breed">Breed</button>
+					<button id="addChildToPool">Add child to pool</button>
+				</p>
+			</div>
+			<div id="publicPoolWrapper">
+				<label>Public Dragon Pool</label>
+				<div id="publicPool" style="width:220; height:220; border:1px solid #9dba4f; overflow: auto;">
+					
+				</div>
+				<p>
+					<button id="addDragonToMyPool">Add dragon to private pool</button>
+				</p>
+			</div>
+			<div id="myDragonPoolWrapper">
+				<label>My Dragon Pool</label>
+				<div id="dragonPool" style="width:220; height:220; border:1px solid #9dba4f; overflow: auto;">
+				</div>
+				    <button id="createDragons">Create dragons</button>
+				    <button id="addDragonToBreeding">Add to breeding</button></br>
+				    <button id="addDragon">Add dragon to chat</button>
+			</div>
+			<div id="clientListWrapper">
+				<label>Who is on?</label>
+				<div id="clientListDiv" style="width:220; height:220; border:1px solid #9dba4f; overflow: auto;">
+					<ul id="clientList">
+					</ul>
+				</div>
+			</div>
+			<div id="messagingWrapper" style="text-align: center;">
+				<div id="streamContainer" style="width:320; height:320; border:1px solid #9dba4f; margin-left: auto; margin-right: auto; overflow: auto; margin-bottom: 10px">
+					<ul id="stream">
+			    </ul>
+				</div>
+			
+				<form id="postMessage">
+			      <label for="message">Post a message</label><br/>
+			      <img id="messageImage" src="" height="55" width="55"/>
+			      <textarea name="message" id="message" rows="3" cols="30"></textarea>
+			      <button idd="submit">Chat</button>
+			      <button id="clear">Clear</button>
+			  </form>
+			</div>
+    
+  </div>
+  
+  <div id="sendButtonContainer" style="visibility: hidden;">button</div>
+
+  <script type="text/javascript">
+    Comet = new Faye.Client('/chat/comet');
+    Chat.init(Comet, "/dragonchat");
+  </script>
+</div>  
+</body>
+</html>
+
