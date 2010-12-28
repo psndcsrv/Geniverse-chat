@@ -3,33 +3,26 @@
 <html>
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-  <title>Geniverse demos: client list</title>
+  <title>Geniverse demos: random channels</title>
   <link rel="stylesheet" href="/chat/style.css" type="text/css" media="screen">
   <script src="/chat/jquery.js" type="text/javascript"></script>
 
   <script src="/chat/comet.js" type="text/javascript"></script>
-  <script src="/chat/client-list-chat.js" type="text/javascript"></script>
+  <script src="/chat/geniversechat.js" type="text/javascript"></script>
   <!--
   <script src="/chat/soapbox.js" type="text/javascript"></script>
   -->
   <script type="text/javascript">
-    function getClients() {
-      Comet.publish("/smeta/clients/main", {user: this._username, message: "foo"})
-    }
-
-  }
-  $(document).ready(function() {
-     $('#getClientList').submit(function(e) {
-        getClients();
-        return false;
-      })
-  });
+    $(document).ready(function() {
+		$('#connectedMessage').html("You are connected to "+channel+". To change channel, refresh this page. (NB: Channel will be randomized on refresh)");
+                $('#title').append(": "+channel)
+	});
   </script>
 </head>
 <body>
 <div class="container">
 
-  <h1><em>Single</em> | channel chat</h1>
+  <h1 id="title"><em>Random</em> | channel chat</h1>
 
   <form id="enterUsername">
     <label for="username">Pick a username</label>
@@ -44,28 +37,24 @@
       <textarea name="message" id="message" rows="3" cols="40"></textarea>
       <input type="submit" value="Go">
     </form>
-
-    <form id="getClientList">
-      <input type="submit" value="Refresh Clients">
-    </form>
-
-    <div>
-      Clients:
-      <ul id="client_list">
-      </ul>
-    </div>
+    <p id="connectedMessage"/>
     <div>
       Chat:
       <ul id="stream">
       </ul>
     </div>
+    <div>
+      Clients:
+      <ul id="clientList">
+      </ul>
+    </div>
   </div>
-
   <script type="text/javascript">
+	var rand=Math.floor(Math.random()*2)
+	var channel = (rand == 0) ? "Channel A" : "Channel B";
     Comet = new Faye.Client('/chat/comet');
-    Soapbox.init(Comet);
+    Chat.init(Comet, '/'+channel.replace(" ",""));
   </script>
-
 </div>
 </body>
 </html>

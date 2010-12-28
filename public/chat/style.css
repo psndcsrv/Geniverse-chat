@@ -1,5 +1,5 @@
 body {
-  background:   #c9eb70;
+  background-color:   #c9eb70;
   margin:       0;
   padding:      0;
   font:         16px/1.5 Helvetica, Arial, sans-serif;
@@ -12,11 +12,20 @@ body {
   margin:       40px auto;
 }
 
-h1, form, ul li {
+h1, form {
   text-align:   left;
   width:        400px;
   background:   #fff;
   padding:      24px;
+  border:       1px solid #9dba4f;
+  margin-left: auto ;
+  margin-right: auto ;
+}
+
+ul li {
+  text-align:   left;
+  background:   #fff;
+  padding:      10px;
   border:       1px solid #9dba4f;
   margin-left: auto ;
   margin-right: auto ;
@@ -47,4 +56,54 @@ ul, li {
 
 .tooltip{ position: absolute; top: 0; left: 0; z-index: 3; display: none; }
 
+#publicPoolWrapper {
+	clear: right;
+	float: right;
+        background-color: #c9eb70;
+}
 
+#publicPool {
+        background-color: white;
+}
+
+#clientListWrapper {
+	clear: right;
+	float: right;
+        background-color: #c9eb70;
+}
+
+#clientListDiv {
+        background-color: white;
+}
+
+#messagingWrapper {
+        background-color: #c9eb70;
+}
+
+#streamContainer {
+        background-color: white;
+}
+
+#myDragonPoolWrapper {
+	clear: left;
+	float: left;
+       background-color:   #c9eb70;
+}
+
+#dragonPool {
+       background-color:   white;
+}
+
+#dragonBreedingWrapper {
+	clear: left;
+	float: left;
+		background-color:   #c9eb70;
+}
+
+#dragonBreeding {
+        background-color: white;
+}
+
+#dragonWindow {
+        background-color: white;
+}
